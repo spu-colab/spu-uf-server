@@ -1,2 +1,2 @@
 # spu-autodoc-server
-Sistema de automação de documentos da Superintendências da SPU
+Sistema de automação de documentos das Superintendências da SPU
