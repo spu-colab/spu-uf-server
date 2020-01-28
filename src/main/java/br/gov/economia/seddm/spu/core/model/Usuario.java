@@ -29,7 +29,6 @@ public class Usuario {
 	@Column(unique = true, nullable = false)
 	private String login;
 	
-	@JsonIgnore
 	@Column(nullable = false)
 	private String senha;
 	

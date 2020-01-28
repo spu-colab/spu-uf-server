@@ -40,7 +40,7 @@ public class UsuarioController {
 		usuario.setSenha(passwordEncoder.encode(usuario.getSenha()));
 		return usuarioRepositorio.save(usuario);
 	}
-	
+		
 	@PutMapping("/{id}")
 	Usuario alterarUsuario(@RequestBody Usuario usuario, @PathVariable Integer id) {
 		return usuarioRepositorio.findById(id)
