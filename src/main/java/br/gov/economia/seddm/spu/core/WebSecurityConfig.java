@@ -1,4 +1,4 @@
-package br.gov.economia.seddm.spu.core.jwt;
+package br.gov.economia.seddm.spu.core;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -17,6 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import br.gov.economia.seddm.spu.core.controller.RequestFilter;
+import br.gov.economia.seddm.spu.core.jwt.JwtAuthenticationEntryPoint;
 
 @Configuration
 @EnableWebSecurity
@@ -57,7 +58,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@Override
 	protected void configure(HttpSecurity httpSecurity) throws Exception {
-		// We don't need CSRF for this example
+		// TODO CSRF desabilitado por enquanto...
 		httpSecurity.csrf().disable()
 
 				// dont authenticate this particular request
