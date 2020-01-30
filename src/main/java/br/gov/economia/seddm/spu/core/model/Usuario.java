@@ -7,7 +7,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import br.gov.economia.seddm.spu.core.pojo.UsuarioLDAP;
 
 @Entity
 @Table(name = "usuario")
@@ -15,11 +15,19 @@ public class Usuario {
 	
 	public Usuario() {}
 	
+	/*
 	Usuario(String login, String senha, String nome, String telefone) {
 		this.login = login;
 		this.senha = senha;
 		this.nome = nome;
 		this.telefone = telefone;
+	}
+	*/
+	
+	public void preencherDados(UsuarioLDAP usuarioLDAP) {
+		this.login = usuarioLDAP.getLogin();
+		this.nome = usuarioLDAP.getNome();
+		this.telefone = usuarioLDAP.getTelefone();		
 	}
 	
 	@Id
@@ -75,6 +83,10 @@ public class Usuario {
 
 	public void setTelefone(String telefone) {
 		this.telefone = telefone;
+	}
+
+	public void validar() {
+		// TODO Auto-generated method stub		
 	}
 	
 }

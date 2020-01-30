@@ -2,6 +2,7 @@ package br.gov.economia.seddm.spu.core.controller;
 
 import java.util.Properties;
 
+import javax.naming.AuthenticationException;
 import javax.naming.Context;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
@@ -24,13 +25,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import br.gov.economia.seddm.spu.core.exception.UsuarioLDAPInvalidoException;
-import br.gov.economia.seddm.spu.core.exception.UsuarioLDAPNaoEncontradoException;
 import br.gov.economia.seddm.spu.core.jwt.JwtRequest;
 import br.gov.economia.seddm.spu.core.jwt.JwtResponse;
 import br.gov.economia.seddm.spu.core.jwt.JwtTokenUtil;
 import br.gov.economia.seddm.spu.core.jwt.JwtUserDetailsService;
+import br.gov.economia.seddm.spu.core.model.Usuario;
 import br.gov.economia.seddm.spu.core.pojo.UsuarioLDAP;
+import br.gov.economia.seddm.spu.core.service.UsuarioServico;
 
 @RestController
 @CrossOrigin
@@ -45,34 +46,44 @@ public class LoginController {
 
 	@Autowired
 	private JwtUserDetailsService userDetailsService;
-
+	
+	@Autowired
+	private UsuarioServico usuarioServico;
+	
 	@RequestMapping(value = "/login", method = RequestMethod.POST)
 	public ResponseEntity<?> login(@RequestBody JwtRequest authenticationRequest) throws Exception {
-		
-		try {
-			UsuarioLDAP usuarioLDAP = obterUsuarioLDAP(authenticationRequest.getUsername(), authenticationRequest.getPassword());
-			if(usuarioLDAP == null) {
-				throw new UsuarioLDAPNaoEncontradoException();
-			}
-			// TODO encontrou usuário valido, cria/atualiza cadastro
-			authenticate(authenticationRequest.getUsername(), authenticationRequest.getPassword());
-			
-		} catch(UsuarioLDAPNaoEncontradoException unee) {
-			try {
-				authenticate(authenticationRequest.getUsername(), authenticationRequest.getPassword());
-			} catch (Exception e) {
-				throw e;
-			}			
-		} catch (Exception e) {
-			throw e;
-		}		
 
+		UsuarioLDAP usuarioLDAP = obterUsuarioLDAP(authenticationRequest.getUsername(), authenticationRequest.getPassword());
+		if(usuarioLDAP != null) {
+			// Encontrou usuário valido. Login e senha informados são válidos...
+			
+			Usuario usuario = usuarioServico.getRepositorio().findByLogin(authenticationRequest.getUsername());
+			if(usuario != null) {
+				// login já cadastrado, então atualiza o cadastro/senha
+				usuario.preencherDados(usuarioLDAP);
+				usuario.setSenha(
+						usuarioServico.cifrarSenha(
+								authenticationRequest.getPassword()));
+				usuario = usuarioServico.alterar(usuario);				
+			} else {
+				// login não encontrado, então cria usuário...
+				usuario = new Usuario();
+				usuario.preencherDados(usuarioLDAP);
+				usuario.setSenha(
+						usuarioServico.cifrarSenha(
+								authenticationRequest.getPassword()));
+				usuario = usuarioServico.criar(usuario);
+			}			
+		}
+		
+		authenticate(authenticationRequest.getUsername(), authenticationRequest.getPassword());
+		
 		final UserDetails userDetails = userDetailsService.loadUserByUsername(authenticationRequest.getUsername());
 		final String token = jwtTokenUtil.generateToken(userDetails);
 		return ResponseEntity.ok(new JwtResponse(token));
 	}
 
-	public static UsuarioLDAP obterUsuarioLDAP(String username, String password) throws NamingException, UsuarioLDAPInvalidoException {
+	public static UsuarioLDAP obterUsuarioLDAP(String username, String password) throws NamingException {
 
 		Properties props = new Properties();
 	    props.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
@@ -92,34 +103,31 @@ public class LoginController {
         			"(&(objectClass=user)(description="+username+"))", 
         			ctls);
         	
-        	if(answer.hasMore()) {
-        		SearchResult rslt = (SearchResult) answer.next();
-        		Attributes attrs = rslt.getAttributes();
-        		
-        		/* leitura dos atributos
-        		Iterator<Attribute> iterator = (Iterator<Attribute>) attrs.getAll().asIterator();
-        		while(iterator.hasNext()) {
-        			Attribute atributo = iterator.next();
-        			System.out.println(atributo);
-        		}
-        		// System.out.println(resultado);
-        		// */
-        		
-        		UsuarioLDAP usuarioLDAP = new UsuarioLDAP();
-        		usuarioLDAP.setLogin(username);
-        		usuarioLDAP.setSenha(password);
-        		usuarioLDAP.setNome((String) attrs.get("displayName").get());
-        		usuarioLDAP.setEmail((String) attrs.get("mail").get());
-        		usuarioLDAP.setTelefone((String) attrs.get("telephoneNumber").get());
-        		usuarioLDAP.setUf((String) attrs.get("l").get());
-        		
-        		usuarioLDAP.validar();
-        		
-        		context.close();
-        		
-        		return usuarioLDAP;
-        		
+        	if(!answer.hasMore()) {
+        		return null;
         	}
+    		SearchResult rslt = (SearchResult) answer.next();
+    		Attributes attrs = rslt.getAttributes();
+    		
+    		/* leitura dos atributos
+    		Iterator<Attribute> iterator = (Iterator<Attribute>) attrs.getAll().asIterator();
+    		while(iterator.hasNext()) {
+    			Attribute atributo = iterator.next();
+    			System.out.println(atributo);
+    		}
+    		// System.out.println(resultado);
+    		// */
+    		context.close();
+    		
+    		UsuarioLDAP usuarioLDAP = new UsuarioLDAP();
+    		usuarioLDAP.setLogin(username);
+    		usuarioLDAP.setSenha(password);
+    		usuarioLDAP.setNome((String) attrs.get("displayName").get());
+    		usuarioLDAP.setEmail((String) attrs.get("mail").get());
+    		usuarioLDAP.setTelefone((String) attrs.get("telephoneNumber").get());
+    		usuarioLDAP.setUf((String) attrs.get("l").get());
+    		return usuarioLDAP;        		
+        } catch (AuthenticationException e) {
         	return null;
         } finally {
 		}
