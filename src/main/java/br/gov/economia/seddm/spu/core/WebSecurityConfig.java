@@ -58,6 +58,11 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@Override
 	protected void configure(HttpSecurity httpSecurity) throws Exception {
+		autenticacaoPorSessao(httpSecurity);
+		// autenticacaoPorJWT(httpSecurity);
+	}
+
+	private void autenticacaoPorJWT(HttpSecurity httpSecurity) throws Exception {
 		// TODO CSRF desabilitado por enquanto...
 		httpSecurity.csrf().disable()
 
@@ -82,6 +87,17 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
 		// Add a filter to validate the tokens with every request
 		httpSecurity.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+	}
+
+	private void autenticacaoPorSessao(HttpSecurity httpSecurity) throws Exception {
+		httpSecurity
+			.httpBasic().and()
+			.authorizeRequests()
+				.antMatchers(HttpMethod.POST,
+						"/auth/login",
+						"/auth/usuario/")
+				.permitAll()
+				.anyRequest().authenticated();
 	}
 
 }

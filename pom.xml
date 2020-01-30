@@ -12,8 +12,8 @@
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 
-	<groupId>br.gov.economia.seddm.spu.escriba</groupId>
-	<artifactId>escriba-core</artifactId>
+	<groupId>br.gov.economia.seddm.spu</groupId>
+	<artifactId>spu-sistemas</artifactId>
 	<packaging>jar</packaging>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>Escriba Core</name>
