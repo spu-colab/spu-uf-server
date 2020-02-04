@@ -1,5 +1,7 @@
 package br.gov.economia.seddm.spu.core;
 
+import java.util.Arrays;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,13 +13,16 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import br.gov.economia.seddm.spu.core.controller.RequestFilter;
 import br.gov.economia.seddm.spu.core.jwt.JwtAuthenticationEntryPoint;
+import br.gov.economia.seddm.spu.core.jwt.JwtUserDetailsService;
 
 @Configuration
 @EnableWebSecurity
@@ -28,10 +33,10 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
 	@Autowired
-	private UserDetailsService jwtUserDetailsService;
+	private JwtUserDetailsService jwtUserDetailsService;
 
 	@Autowired
-	private RequestFilter jwtRequestFilter;
+	private RequestFilter requestFilter;
 
 	@Autowired
 	public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
@@ -45,9 +50,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@Bean
 	public PasswordEncoder passwordEncoder() {
-
 		return new BCryptPasswordEncoder();
-
 	}
 
 	@Bean
@@ -58,13 +61,15 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@Override
 	protected void configure(HttpSecurity httpSecurity) throws Exception {
-		autenticacaoPorSessao(httpSecurity);
-		// autenticacaoPorJWT(httpSecurity);
+		// autenticacaoPorSessao(httpSecurity);
+		definirRestricoesAcessoRotas(httpSecurity);
 	}
 
-	private void autenticacaoPorJWT(HttpSecurity httpSecurity) throws Exception {
-		// TODO CSRF desabilitado por enquanto...
-		httpSecurity.csrf().disable()
+	private void definirRestricoesAcessoRotas(HttpSecurity httpSecurity) throws Exception {
+		httpSecurity
+				
+			// TODO CSRF desabilitado por enquanto...
+			.csrf().disable()
 
 				// dont authenticate this particular request
 				.authorizeRequests()
@@ -73,22 +78,24 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 					//.permitAll()
 					
 					.antMatchers(HttpMethod.POST,
-							"/auth/login",
-							"/auth/usuario/")
-					.permitAll()
+							"/login").permitAll()
 
-				// all other requests need to be authenticated
-				.anyRequest().authenticated().and().
+					// all other requests need to be authenticated
+					.anyRequest().authenticated()
+					.and()
 
+			.cors().and()
+			
 				// make sure we use stateless session; session won't be used to
 				// store user's state.
-				exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint).and().sessionManagement()
+				.exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint).and().sessionManagement()
 				.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
 
 		// Add a filter to validate the tokens with every request
-		httpSecurity.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+		httpSecurity.addFilterBefore(requestFilter, UsernamePasswordAuthenticationFilter.class);
 	}
 
+	/*
 	private void autenticacaoPorSessao(HttpSecurity httpSecurity) throws Exception {
 		httpSecurity
 			.httpBasic().and()
@@ -99,5 +106,18 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 				.permitAll()
 				.anyRequest().authenticated();
 	}
+	*/
+	
+	@Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(Arrays.asList("*"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList("authorization", "content-type", "x-auth-token", "X-CSRF-TOKEN"));
+        configuration.setExposedHeaders(Arrays.asList("x-auth-token", "X-CSRF-TOKEN"));
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
 
 }

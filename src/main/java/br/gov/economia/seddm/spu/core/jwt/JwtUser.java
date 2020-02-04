@@ -7,6 +7,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import br.gov.economia.seddm.spu.core.model.Usuario;
+
 public class JwtUser implements UserDetails {
 
 	private static final long serialVersionUID = -6621738698379364852L;
@@ -15,10 +17,15 @@ public class JwtUser implements UserDetails {
 	
 	private String password;
 
-	public JwtUser(String username, String password) {
+	private Usuario usuario;
+
+	public JwtUser(String username, String password, Usuario usuario) {
 		this.username = username;
 		this.password = password;
+		this.setUsuario(usuario);
+		this.getUsuario().setSenha(null);
 	}
+	
 
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -57,6 +64,16 @@ public class JwtUser implements UserDetails {
 	@Override
 	public boolean isEnabled() {
 		return true;
+	}
+
+
+	public Usuario getUsuario() {
+		return usuario;
+	}
+
+
+	public void setUsuario(Usuario usuario) {
+		this.usuario = usuario;
 	}
 
 }

@@ -34,8 +34,6 @@ import br.gov.economia.seddm.spu.core.pojo.UsuarioLDAP;
 import br.gov.economia.seddm.spu.core.service.UsuarioServico;
 
 @RestController
-@CrossOrigin
-@RequestMapping(path = "/auth")
 public class LoginController {
 
 	@Autowired
@@ -49,15 +47,17 @@ public class LoginController {
 	
 	@Autowired
 	private UsuarioServico usuarioServico;
-	
+
+	@CrossOrigin
 	@RequestMapping(value = "/login", method = RequestMethod.POST)
 	public ResponseEntity<?> login(@RequestBody JwtRequest authenticationRequest) throws Exception {
 
 		UsuarioLDAP usuarioLDAP = obterUsuarioLDAP(authenticationRequest.getUsername(), authenticationRequest.getPassword());
+		Usuario usuario = null;
 		if(usuarioLDAP != null) {
 			// Encontrou usuário valido. Login e senha informados são válidos...
 			
-			Usuario usuario = usuarioServico.getRepositorio().findByLogin(authenticationRequest.getUsername());
+			usuario = usuarioServico.getRepositorio().findByLogin(authenticationRequest.getUsername());
 			if(usuario != null) {
 				// login já cadastrado, então atualiza o cadastro/senha
 				usuario.preencherDados(usuarioLDAP);

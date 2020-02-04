@@ -27,7 +27,8 @@ public class Usuario {
 	public void preencherDados(UsuarioLDAP usuarioLDAP) {
 		this.login = usuarioLDAP.getLogin();
 		this.nome = usuarioLDAP.getNome();
-		this.telefone = usuarioLDAP.getTelefone();		
+		this.telefone = usuarioLDAP.getTelefone();
+		this.email = usuarioLDAP.getEmail();
 	}
 	
 	@Id
@@ -42,6 +43,8 @@ public class Usuario {
 	
 	@Column(nullable = false)
 	private String nome;
+	
+	private String email;
 	
 	private String telefone;
 
@@ -87,6 +90,14 @@ public class Usuario {
 
 	public void validar() {
 		// TODO Auto-generated method stub		
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
 	}
 	
 }

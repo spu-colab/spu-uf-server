@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import br.gov.economia.seddm.spu.core.AutenticacaoBean;
 import br.gov.economia.seddm.spu.core.model.Usuario;
 import br.gov.economia.seddm.spu.core.service.UsuarioServico;
 
@@ -20,6 +21,16 @@ public class UsuarioController {
 	
 	@Autowired
 	private UsuarioServico usuarioServico;
+	
+	@Autowired
+	private AutenticacaoBean session;
+	
+	@GetMapping("/hello")
+	String hello() {
+		// Usuario usuario = (Usuario) session.getAttribute("usuario");
+		Usuario usuario = session.getUsuario();
+		return "Hello, " + usuario.getNome() + "!";
+	}
 	
 	@GetMapping("/")
 	Iterable<Usuario> listar() {
